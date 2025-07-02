@@ -12,19 +12,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 </head>
-<style>
-  .explanation-title {
-  font-weight: bold;
-  color: #1976D2;
-  margin-bottom: 1rem;
-}
-
-.explanation-content {
-  padding: 1rem;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-} 
-</style>
 
 <body>
   <nav class="navbar navbar-expand-lg bg-body-tertiary" data-bs-theme="dark">
@@ -35,30 +22,61 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <div class="nav-item dropdown ms-auto" role="group" aria-label="Toggle dark mode" title="Toggle Dark Mode">
-          <button class="dark-theme-toggle btn btn-outline-light dropdown-toggle" type="button"
-            data-bs-toggle="dropdown" aria-expanded="false" aria-label="Toggle theme (auto)">
-            <i class="bi bi-circle-half"></i> <span class="d-lg-none ms-2">Toggle theme</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end">
-            <li><button class="dropdown-item" data-bs-theme-value="light"><i class="me-2 bi bi-sun-fill"></i>
-                Light</button></li>
-            <li><button class="dropdown-item" data-bs-theme-value="dark"><i class="me-2 bi bi-moon-stars-fill"></i>
-                Dark</button></li>
-            <li><button class="dropdown-item" data-bs-theme-value="auto"><i class="me-2 bi bi-circle-half"></i>
-                Auto</button></li>
-          </ul>
+        <div class="navbar-nav ms-auto d-flex flex-row gap-2">
+          <!-- Model Selection -->
+          <div class="nav-item">
+            <select id="model-selector" class="form-select form-select-sm" style="min-width: 140px;">
+              <option value="gpt-4o-mini">GPT-4o Mini</option>
+              <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+            </select>
+          </div>
+          
+          <!-- Settings Button -->
+          <div class="nav-item">
+            <button class="btn btn-outline-light btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#settingsModal" title="API Settings">
+              <i class="bi bi-gear"></i>
+            </button>
+          </div>
+          
+          <!-- Theme Toggle -->
+          <div class="nav-item dropdown" role="group" aria-label="Toggle dark mode" title="Toggle Dark Mode">
+            <button class="dark-theme-toggle btn btn-outline-light btn-sm dropdown-toggle" type="button"
+              data-bs-toggle="dropdown" aria-expanded="false" aria-label="Toggle theme (auto)">
+              <i class="bi bi-circle-half"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><button class="dropdown-item" data-bs-theme-value="light"><i class="me-2 bi bi-sun-fill"></i>
+                  Light</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="dark"><i class="me-2 bi bi-moon-stars-fill"></i>
+                  Dark</button></li>
+              <li><button class="dropdown-item" data-bs-theme-value="auto"><i class="me-2 bi bi-circle-half"></i>
+                  Auto</button></li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
   </nav>
   <div class="container-fluid d-flex flex-column p-0" style="height: calc(100vh - 56px);">
     <div class="row flex-grow-1 g-0">
+      <!-- Chat Sidebar -->
+      <div class="col-md-2 chat-sidebar overflow-auto border-end">
+        <div class="p-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0">Recent Chats</h6>
+            <button id="new-chat" class="btn btn-sm btn-outline-primary">New</button>
+          </div>
+          <div id="chat-list" class="list-group list-group-flush">
+            <!-- Chat items will be populated here -->
+          </div>
+        </div>
+      </div>
+      
       <!-- Left Panel: Explanation -->
-      <div class="col-md-4 left-panel overflow-auto border-end">
+      <div class="col-md-4 left-panel border-end">
         <div class="p-3">
           <h5 class="mb-3">Explanation & Context</h5>
-          <div id="explanation-container">
+          <div id="conversation-history" class="overflow-auto" style="height: 700px;">
             <div class="text-muted text-center fst-italic mt-4">
               Ask a question below to get an explanation and code example.
             </div>
@@ -67,12 +85,12 @@
       </div>
 
       <!-- Right Panel: Code & Output -->
-      <div class="col-md-8 right-panel overflow-auto">
+      <div class="col-md-6 right-panel overflow-auto">
         <div class="p-3">
           <!-- Code Editor Section -->
           <div class="mb-4">
             <h5 class="mb-3">JavaScript Code</h5>
-            <textarea id="code-editor" class="form-control mb-2 code-area">// The AI will generate JavaScript code based on your prompts
+            <textarea id="code-editor" class="form-control mb-2 code-area" style="height: 500px;">// The AI will generate JavaScript code based on your prompts
 // This code will run in the browser when you click "Run Code"
 
 // Example:
@@ -97,6 +115,10 @@ function helloWorld() {
     <div class="row g-0 border-top mt-auto">
       <div class="col-12">
         <div class="d-flex p-3">
+          <input type="file" id="file-upload" class="form-control me-2" style="display: none;" accept=".txt,.js,.html,.css,.json,.md">
+          <button id="upload-btn" class="btn btn-outline-secondary me-2" title="Upload File">
+            <i class="bi bi-paperclip"></i>
+          </button>
           <textarea id="chat-input" class="form-control me-2"
             placeholder="Ask for JavaScript code to generate..."></textarea>
           <button id="send-message" class="btn btn-primary px-4">Generate</button>
@@ -105,13 +127,43 @@ function helloWorld() {
     </div>
   </div>
   
-  <footer class="my-5 vh-100 d-flex align-items-center justify-content-center">
-    <h1 class="display-4">Designed by <a href="https://gramener.com/" class="text-reset link-offset-3 link-underline link-underline-opacity-25">Gramener</a></h1>
-  </footer>
+  <!-- Settings Modal -->
+  <div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="settingsModalLabel">API Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="settingsForm">
+            <div class="mb-3">
+              <label for="apiBaseUrl" class="form-label">API Base URL</label>
+              <input type="url" class="form-control" id="apiBaseUrl" placeholder="https://api.openai.com/v1" required>
+              <div class="form-text">Enter the base URL for your OpenAI-compatible API</div>
+            </div>
+            <div class="mb-3">
+              <label for="apiKey" class="form-label">API Key</label>
+              <input type="password" class="form-control" id="apiKey" placeholder="sk-..." required>
+              <div class="form-text">Your API key will be stored locally in your browser</div>
+            </div>
+            <div class="alert alert-info" role="alert">
+              <i class="bi bi-info-circle"></i>
+              <strong>Privacy Notice:</strong> Your API key and base URL are stored locally in your browser and never sent to our servers.
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="saveSettings">Save Settings</button>
+        </div>
+      </div>
+    </div>
+  </div>
   
   <!-- Bootstrap JS Bundle with Popper -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js" type="module"></script>
   <script src="https://cdn.jsdelivr.net/npm/@gramex/ui@0.3/dist/dark-theme.js" type="module"></script>
 </body>
 
