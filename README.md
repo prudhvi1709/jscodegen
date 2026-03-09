@@ -256,3 +256,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 **Professional AI-powered development tool for the JavaScript community**
+---
+> **This is Demo. contains no confidential data/IP**
